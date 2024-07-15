@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MIT
+
+// Sample code for parsing and loading a BIN/CUE disc image
+// and then reading a sector
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
