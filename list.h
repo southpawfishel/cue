@@ -1,3 +1,6 @@
+// Tiny BIN/CUE parsing and loading library
+// SPDX-License-Identifier: MIT
+
 #ifndef LIST_H
 #define LIST_H
 

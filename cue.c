@@ -1,3 +1,6 @@
+// Tiny BIN/CUE parsing and loading library
+// SPDX-License-Identifier: MIT
+
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
