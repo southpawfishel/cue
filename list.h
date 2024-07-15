@@ -4,6 +4,10 @@
 #ifndef LIST_H
 #define LIST_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stddef.h>
 
 typedef struct node_t node_t;
@@ -30,5 +34,9 @@ node_t* list_back(list_t* list);
 node_t* list_at(list_t* list, int index);
 void list_iterate(list_t* list, void (*func)(void*));
 void list_destroy(list_t* list);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
