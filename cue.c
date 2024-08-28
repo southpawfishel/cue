@@ -73,6 +73,22 @@ const char* find_last_slash(const char* a) {
     return b;
 }
 
+char* find_last_dot(char* a, size_t len) {
+    if (!a)
+        return NULL;
+
+    char* b = a + len - 1;
+
+    while (b > a) {
+        if (*b == '.')
+            return b + 1; 
+
+        --b;
+    }
+
+    return NULL;
+}
+
 char* get_root_path(char* dst, const char* a) {
     if (!a) {
         *dst = '\0';
@@ -230,6 +246,26 @@ struct cue_file* cue_parse_file(struct cue_state* cue, const char* p, const char
 
     file->tracks = list_create();
     file->name = malloc(512);
+
+    size_t cue_name_len = strlen(p);
+    // Reserve extra space in case we need to append an extension
+    file->name_backup = malloc(cue_name_len + 4);
+    strcpy(file->name_backup, p);
+
+    // In case we try to parse a cue sheet that's been edited such that the
+    // bin file listed in the cue sheet doesn't match the name of the actual
+    // bin file on the disk, we can fall back to assuming the bin filename
+    // is the same as the cue filename with the extension stripped and .bin
+    // as the extension.
+    char* cue_name_ext = find_last_dot(file->name_backup, cue_name_len);
+    if (cue_name_ext == NULL) {
+        cue_name_ext = file->name_backup + cue_name_len;
+        *cue_name_ext++ = '.';
+    }
+    *cue_name_ext++ = 'b';
+    *cue_name_ext++ = 'i';
+    *cue_name_ext++ = 'n';
+    *cue_name_ext++ = '\0';
 
     // Append root path to track file path
     char* ptr = file->name;
@@ -391,6 +427,9 @@ int cue_load(struct cue_state* cue, int mode) {
         FILE* file = fopen(data->name, "rb");
 
         if (!file)
+            file = fopen(data->name_backup, "rb");
+
+        if (!file)
             return CUE_TRACK_FILE_NOT_FOUND;
 
         data->buf_mode = mode;
@@ -438,6 +477,7 @@ void cue_destroy(struct cue_state* cue) {
         list_destroy(file->tracks);
 
         free(file->name);
+        free(file->name_backup);
         free(file);
 
         node = node->next;
@@ -523,7 +563,7 @@ int cue_read(struct cue_state* cue, uint32_t lba, void* buf) {
     // and initialize sync data (not actually needed)
     if (!track) {
         memset(buf, 0, 2352);
-        memset(buf + 1, 255, 10);
+        memset((char*)buf + 1, 255, 10);
 
         return TS_PREGAP;
     }
@@ -540,7 +580,7 @@ int cue_read(struct cue_state* cue, uint32_t lba, void* buf) {
     // );
 
     if (file->buf_mode == LD_BUFFERED) {
-        uint8_t* ptr = file->buf + ((lba - file->start) * 2352);
+        uint8_t* ptr = (uint8_t*)file->buf + ((lba - file->start) * 2352);
 
         memcpy(buf, ptr, 2352);
     } else {
