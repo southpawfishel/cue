@@ -91,6 +91,7 @@ enum {
 
 struct cue_file {
     char* name;
+    char* name_backup;
     int buf_mode;
     void* buf;
     size_t size;
