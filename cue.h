@@ -129,7 +129,7 @@ int cue_read(struct cue_state* cue, uint32_t lba, void* buf);
 int cue_query(struct cue_state* cue, uint32_t lba);
 int cue_get_track_number(struct cue_state* cue, uint32_t lba);
 int cue_get_track_count(struct cue_state* cue);
-int cue_get_track_lba(struct cue_state* cue, int track);
+int cue_get_track_lba(struct cue_state* cue, uint32_t track);
 void cue_destroy(struct cue_state* cue);
 
 #ifdef __cplusplus

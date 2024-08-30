@@ -46,6 +46,8 @@ static const char* m_cue_keywords[] = {
 #define MSF_TO_LBA(m, s, f) ((m * 4500) + (s * 75) + f)
 
 int main(int argc, const char* argv[]) {
+    (void)argc;
+    
     struct cue_state* cue = cue_create();
     cue_init(cue);
 

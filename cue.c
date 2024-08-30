@@ -525,8 +525,8 @@ struct cue_track* get_sector_track_in_pregap(struct cue_state* cue, uint32_t lba
         struct cue_track* next = node->next->data;
 
         // Ignore sector number
-        int curr_start = track->start - (track->start % 75);
-        int next_start = next->start - (next->start % 75);
+        uint32_t curr_start = track->start - (track->start % 75);
+        uint32_t next_start = next->start - (next->start % 75);
 
         if ((lba >= curr_start) && (lba < next_start))
             return track;
@@ -605,7 +605,7 @@ int cue_get_track_count(struct cue_state* cue) {
     return cue->tracks->size;
 }
 
-int cue_get_track_lba(struct cue_state* cue, int track) {
+int cue_get_track_lba(struct cue_state* cue, uint32_t track) {
     if (!track)
         return ((struct cue_track*)list_back(cue->tracks)->data)->end;
 

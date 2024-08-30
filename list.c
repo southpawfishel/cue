@@ -88,13 +88,13 @@ node_t* list_back(list_t* list) {
     return list->last;
 }
 
-node_t* list_at(list_t* list, int index) {
+node_t* list_at(list_t* list, size_t index) {
     if (index > list->size)
         return NULL;
 
     node_t* node = list->first;
 
-    for (int i = 0; i < index; i++)
+    for (size_t i = 0; i < index; i++)
         node = node->next;
 
     return node;
