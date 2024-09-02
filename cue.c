@@ -115,7 +115,7 @@ char* get_root_path(char* dst, const char* a) {
     return d;
 }
 
-int cue_parse_keyword(struct cue_state* cue) {
+int cue_parse_keyword(cue_state* cue) {
     char buf[256];
     char* ptr = buf;
 
@@ -142,7 +142,7 @@ int cue_parse_keyword(struct cue_state* cue) {
     return -1;
 }
 
-int cue_parse_number(struct cue_state* cue) {
+int cue_parse_number(cue_state* cue) {
     if (!isdigit(cue->c))
         return 0;
 
@@ -161,7 +161,7 @@ int cue_parse_number(struct cue_state* cue) {
     return atoi(buf);
 }
 
-uint32_t cue_parse_msf(struct cue_state* cue) {
+uint32_t cue_parse_msf(cue_state* cue) {
     int m = 0;
     int s = 0;
     int f = 0;
@@ -190,8 +190,8 @@ uint32_t cue_parse_msf(struct cue_state* cue) {
     return f + (s * 75) + (m * 4500);
 }
 
-void cue_parse_index(struct cue_state* cue) {
-    struct cue_track* track = list_back(cue->tracks)->data;
+void cue_parse_index(cue_state* cue) {
+    cue_track* track = list_back(cue->tracks)->data;
 
     while (isspace(cue->c))
         cue->c = fgetc(cue->file);
@@ -210,14 +210,14 @@ void cue_parse_index(struct cue_state* cue) {
     track->index[i] = cue_parse_msf(cue);
 }
 
-struct cue_track* cue_parse_track(struct cue_state* cue) {
+cue_track* cue_parse_track(cue_state* cue) {
     while (isspace(cue->c))
         cue->c = fgetc(cue->file);
 
     if (!isdigit(cue->c))
         return NULL;
 
-    struct cue_track* track = malloc(sizeof(struct cue_track));
+    cue_track* track = malloc(sizeof(cue_track));
 
     track->end = 0;
     track->start = 0;
@@ -235,14 +235,14 @@ struct cue_track* cue_parse_track(struct cue_state* cue) {
     return track;
 }
 
-struct cue_file* cue_parse_file(struct cue_state* cue, const char* p, const char* s) {
+cue_file* cue_parse_file(cue_state* cue, const char* p, const char* s) {
     while (isspace(cue->c))
         cue->c = fgetc(cue->file);
 
     if (cue->c != '\"')
         return NULL;
 
-    struct cue_file* file = malloc(sizeof(struct cue_file));
+    cue_file* file = malloc(sizeof(cue_file));
 
     file->tracks = list_create();
     file->name = malloc(512);
@@ -295,16 +295,16 @@ struct cue_file* cue_parse_file(struct cue_state* cue, const char* p, const char
     return file;
 }
 
-struct cue_state* cue_create(void) {
-    return malloc(sizeof(struct cue_state));
+cue_state* cue_create(void) {
+    return malloc(sizeof(cue_state));
 }
 
-void cue_init(struct cue_state* cue) {
+void cue_init(cue_state* cue) {
     cue->files = list_create();
     cue->tracks = list_create();
 }
 
-int cue_parse(struct cue_state* cue, const char* path) {
+int cue_parse(cue_state* cue, const char* path) {
     cue->file = fopen(path, "rb");
 
     if (!cue->file)
@@ -326,8 +326,8 @@ int cue_parse(struct cue_state* cue, const char* path) {
             } break;
 
             case CUE_TRACK: {
-                struct cue_track* track = cue_parse_track(cue);
-                struct cue_file* file = list_back(cue->files)->data;
+                cue_track* track = cue_parse_track(cue);
+                cue_file* file = list_back(cue->files)->data;
 
                 list_push_back(cue->tracks, track);
                 list_push_back(file->tracks, track);
@@ -370,12 +370,12 @@ size_t get_file_size(FILE* file) {
     return size;
 }
 
-uint32_t init_tracks(struct cue_file* file, uint32_t* lba) {
+uint32_t init_tracks(cue_file* file, uint32_t* lba) {
     node_t* node = list_front(file->tracks);
 
     // 1 track per file case
     if (file->tracks->size == 1) {
-        struct cue_track* data = node->data;
+        cue_track* data = node->data;
 
         data->pregap = 0;
 
@@ -392,7 +392,7 @@ uint32_t init_tracks(struct cue_file* file, uint32_t* lba) {
 
     // Multiple tracks per file
     while (node) {
-        struct cue_track* data = node->data;
+        cue_track* data = node->data;
 
         // If this is the last track
         if (!node->next) {
@@ -403,7 +403,7 @@ uint32_t init_tracks(struct cue_file* file, uint32_t* lba) {
             return 0;
         }
 
-        struct cue_track* next = node->next->data;
+        cue_track* next = node->next->data;
 
         data->pregap = 0;
         data->start = data->index[1] + 150;
@@ -415,14 +415,14 @@ uint32_t init_tracks(struct cue_file* file, uint32_t* lba) {
     return 0;
 }
 
-int cue_load(struct cue_state* cue, int mode) {
+int cue_load(cue_state* cue, int mode) {
     node_t* node = list_front(cue->files);
 
     // 00:02:00
     uint32_t lba = 2 * 75;
 
     while (node) {
-        struct cue_file* data = node->data;
+        cue_file* data = node->data;
 
         FILE* file = fopen(data->name, "rb");
 
@@ -462,11 +462,11 @@ int cue_load(struct cue_state* cue, int mode) {
     return CUE_OK;
 }
 
-void cue_destroy(struct cue_state* cue) {
+void cue_destroy(cue_state* cue) {
     node_t* node = list_front(cue->files);
 
     while (node) {
-        struct cue_file* file = node->data;
+        cue_file* file = node->data;
 
         if (file->buf_mode == LD_BUFFERED) {
             free(file->buf);
@@ -498,11 +498,11 @@ void cue_destroy(struct cue_state* cue) {
     free(cue);
 }
 
-struct cue_track* get_sector_track(struct cue_state* cue, uint32_t lba) {
+cue_track* get_sector_track(cue_state* cue, uint32_t lba) {
     node_t* node = list_front(cue->tracks);
 
     while (node) {
-        struct cue_track* track = node->data;
+        cue_track* track = node->data;
 
         if ((lba >= track->start) && (lba < track->end))
             return track;
@@ -513,16 +513,16 @@ struct cue_track* get_sector_track(struct cue_state* cue, uint32_t lba) {
     return NULL;
 }
 
-struct cue_track* get_sector_track_in_pregap(struct cue_state* cue, uint32_t lba) {
+cue_track* get_sector_track_in_pregap(cue_state* cue, uint32_t lba) {
     node_t* node = list_front(cue->tracks);
 
     while (node) {
-        struct cue_track* track = node->data;
+        cue_track* track = node->data;
 
         if (!node->next)
             return track;
 
-        struct cue_track* next = node->next->data;
+        cue_track* next = node->next->data;
 
         // Ignore sector number
         uint32_t curr_start = track->start - (track->start % 75);
@@ -537,11 +537,11 @@ struct cue_track* get_sector_track_in_pregap(struct cue_state* cue, uint32_t lba
     return NULL;
 }
 
-int cue_query(struct cue_state* cue, uint32_t lba) {
-    if (lba >= ((struct cue_track*)list_back(cue->tracks)->data)->end)
+int cue_query(cue_state* cue, uint32_t lba) {
+    if (lba >= ((cue_track*)list_back(cue->tracks)->data)->end)
         return TS_FAR;
 
-    struct cue_track* track = get_sector_track(cue, lba);
+    cue_track* track = get_sector_track(cue, lba);
 
     // If the LBA isn't too far but the track wasn't found
     // then we are being requested a pregap sector. Clear buffer
@@ -552,11 +552,11 @@ int cue_query(struct cue_state* cue, uint32_t lba) {
     return (track->mode == CUE_MODE2_2352) ? TS_DATA : TS_AUDIO;
 }
 
-int cue_read(struct cue_state* cue, uint32_t lba, void* buf) {
-    if (lba >= ((struct cue_track*)list_back(cue->tracks)->data)->end)
+int cue_read(cue_state* cue, uint32_t lba, void* buf) {
+    if (lba >= ((cue_track*)list_back(cue->tracks)->data)->end)
         return TS_FAR;
 
-    struct cue_track* track = get_sector_track(cue, lba);
+    cue_track* track = get_sector_track(cue, lba);
 
     // If the LBA isn't too far but the track wasn't found
     // then we are being requested a pregap sector. Clear buffer
@@ -568,7 +568,7 @@ int cue_read(struct cue_state* cue, uint32_t lba, void* buf) {
         return TS_PREGAP;
     }
 
-    struct cue_file* file = track->file;
+    cue_file* file = track->file;
 
     // printf("Reading sector %u at track %u, file=%s (%u), offset=%u (%08x)\n",
     //     lba,
@@ -592,8 +592,8 @@ int cue_read(struct cue_state* cue, uint32_t lba, void* buf) {
     return (track->mode == CUE_MODE2_2352) ? TS_DATA : TS_AUDIO;
 }
 
-int cue_get_track_number(struct cue_state* cue, uint32_t lba) {
-    struct cue_track* track = get_sector_track_in_pregap(cue, lba);
+int cue_get_track_number(cue_state* cue, uint32_t lba) {
+    cue_track* track = get_sector_track_in_pregap(cue, lba);
 
     if (cue_query(cue, lba) == TS_PREGAP)
         return track->number + 1;
@@ -601,18 +601,18 @@ int cue_get_track_number(struct cue_state* cue, uint32_t lba) {
     return track->number;
 }
 
-int cue_get_track_count(struct cue_state* cue) {
+int cue_get_track_count(cue_state* cue) {
     return cue->tracks->size;
 }
 
-int cue_get_track_lba(struct cue_state* cue, uint32_t track) {
+int cue_get_track_lba(cue_state* cue, uint32_t track) {
     if (!track)
-        return ((struct cue_track*)list_back(cue->tracks)->data)->end;
+        return ((cue_track*)list_back(cue->tracks)->data)->end;
 
     if (track > cue->tracks->size)
         return TS_FAR;
 
-    struct cue_track* data = list_at(cue->tracks, track - 1)->data;
+    cue_track* data = list_at(cue->tracks, track - 1)->data;
 
     return data->start;
 }

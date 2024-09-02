@@ -89,7 +89,7 @@ enum {
     TS_PREGAP
 };
 
-struct cue_file {
+typedef struct cue_file {
     char* name;
     char* name_backup;
     int buf_mode;
@@ -97,9 +97,9 @@ struct cue_file {
     size_t size;
     uint32_t start;
     list_t* tracks;
-};
+} cue_file;
 
-struct cue_track {
+typedef struct cue_track {
     int number;
     int mode;
 
@@ -109,28 +109,28 @@ struct cue_track {
     uint32_t end;
 
     struct cue_file* file;
-};
+} cue_track;
 
-struct cue_state {
+typedef struct cue_state {
     list_t* files;
     list_t* tracks;
 
     char c;
     FILE* file;
-};
+} cue_state;
 
-struct cue_state* cue_create(void);
-void cue_init(struct cue_state* cue);
-int cue_parse(struct cue_state* cue, const char* path);
-int cue_load(struct cue_state* cue, int mode);
+cue_state* cue_create(void);
+void cue_init(cue_state* cue);
+int cue_parse(cue_state* cue, const char* path);
+int cue_load(cue_state* cue, int mode);
 
 // Disc interface
-int cue_read(struct cue_state* cue, uint32_t lba, void* buf);
-int cue_query(struct cue_state* cue, uint32_t lba);
-int cue_get_track_number(struct cue_state* cue, uint32_t lba);
-int cue_get_track_count(struct cue_state* cue);
-int cue_get_track_lba(struct cue_state* cue, uint32_t track);
-void cue_destroy(struct cue_state* cue);
+int cue_read(cue_state* cue, uint32_t lba, void* buf);
+int cue_query(cue_state* cue, uint32_t lba);
+int cue_get_track_number(cue_state* cue, uint32_t lba);
+int cue_get_track_count(cue_state* cue);
+int cue_get_track_lba(cue_state* cue, uint32_t track);
+void cue_destroy(cue_state* cue);
 
 #ifdef __cplusplus
 }
