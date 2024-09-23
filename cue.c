@@ -454,7 +454,8 @@ int cue_load(cue_state* cue, int mode, char* ext_buffer) {
             }
 
             fseek(file, 0, SEEK_SET);
-            fread(data->buf, 1, data->size, file);
+            size_t ret = fread(data->buf, 1, data->size, file);
+            (void)ret;
 
             fclose(file);
         } else {
@@ -595,7 +596,8 @@ int cue_read(cue_state* cue, uint32_t lba, void* buf) {
     } else {
         fseek(file->buf, (lba - file->start) * 2352, SEEK_SET);
 
-        fread(buf, 1, 2352, file->buf);
+        size_t ret = fread(buf, 1, 2352, file->buf);
+        (void)ret;
     }
 
     return (track->mode == CUE_MODE2_2352) ? TS_DATA : TS_AUDIO;
