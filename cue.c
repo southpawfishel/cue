@@ -415,7 +415,7 @@ uint32_t init_tracks(cue_file* file, uint32_t* lba) {
     return 0;
 }
 
-int cue_load(cue_state* cue, int mode) {
+int cue_load(cue_state* cue, int mode, char* ext_buffer) {
     node_t* node = list_front(cue->files);
 
     // 00:02:00
@@ -441,11 +441,21 @@ int cue_load(cue_state* cue, int mode) {
         //     data->size / 0x930
         // );
 
-        if (data->buf_mode == LD_BUFFERED) {
-            data->buf = malloc(data->size);
+        if (data->buf_mode == LD_BUFFERED || data->buf_mode == LD_BUFFERED_EXT) {
+            if (data->buf_mode == LD_BUFFERED_EXT) {
+                if (ext_buffer != NULL) {
+                    data->buf = ext_buffer;
+                } else {
+                    return CUE_NULL_BUFFER;
+                }
+            }
+            else {
+                data->buf = malloc(data->size);
+            }
 
             fseek(file, 0, SEEK_SET);
-            fread(data->buf, 1, data->size, file);
+            size_t ret = fread(data->buf, 1, data->size, file);
+            (void)ret;
 
             fclose(file);
         } else {
@@ -579,14 +589,15 @@ int cue_read(cue_state* cue, uint32_t lba, void* buf) {
     //     (lba - file->start) * 2352
     // );
 
-    if (file->buf_mode == LD_BUFFERED) {
+    if (file->buf_mode == LD_BUFFERED || file->buf_mode == LD_BUFFERED_EXT) {
         uint8_t* ptr = (uint8_t*)file->buf + ((lba - file->start) * 2352);
 
         memcpy(buf, ptr, 2352);
     } else {
         fseek(file->buf, (lba - file->start) * 2352, SEEK_SET);
 
-        fread(buf, 1, 2352, file->buf);
+        size_t ret = fread(buf, 1, 2352, file->buf);
+        (void)ret;
     }
 
     return (track->mode == CUE_MODE2_2352) ? TS_DATA : TS_AUDIO;

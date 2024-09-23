@@ -40,7 +40,8 @@ extern "C" {
 enum {
     CUE_OK = 0,
     CUE_FILE_NOT_FOUND,
-    CUE_TRACK_FILE_NOT_FOUND
+    CUE_TRACK_FILE_NOT_FOUND,
+    CUE_NULL_BUFFER
 };
 
 enum {
@@ -79,6 +80,7 @@ enum {
 
 enum {
     LD_BUFFERED,
+    LD_BUFFERED_EXT,
     LD_FILE
 };
 
@@ -122,7 +124,7 @@ typedef struct cue_state {
 cue_state* cue_create(void);
 void cue_init(cue_state* cue);
 int cue_parse(cue_state* cue, const char* path);
-int cue_load(cue_state* cue, int mode);
+int cue_load(cue_state* cue, int mode, char* ext_buffer);
 
 // Disc interface
 int cue_read(cue_state* cue, uint32_t lba, void* buf);
